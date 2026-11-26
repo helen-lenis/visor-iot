@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visor IoT - Cygnus</title>
+<style>
+  body{font-family:Arial,sans-serif;margin:0;padding:16px;background:#f2f4f8;color:#222}
+  .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+  h1{font-size:1.3rem;margin:0 0 12px} h2{font-size:1.1rem;margin:0 0 8px}
+  label{display:block;margin:8px 0 4px;font-size:.9rem}
+  input{width:100%;padding:8px;box-sizing:border-box;border:1px solid #bbb;border-radius:6px}
+  button{margin:10px 6px 0 0;padding:10px 14px;border:0;border-radius:8px;background:#0078d4;color:#fff;font-size:1rem}
+  #estado{font-size:1.8rem;font-weight:bold;text-align:center;padding:16px;border-radius:10px;background:#ddd}
+  .ok{background:#c8f7c5!important;color:#0a6b0a}
+  .no{background:#ffc9c9!important;color:#a30000}
+  .info{font-size:.85rem;margin-top:8px;color:#555}
+</style>
+</head>
+<body>
+  <h1>Visor IoT - Cygnus</h1>
+
+  <div class="card">
+    <h2>Leer sensor</h2>
+    <label>ID del dispositivo</label>
+    <input id="idLeer" value="242">
+    <label>Clave del dispositivo</label>
+    <input id="claveLeer" type="password">
+    <div id="estado" style="margin-top:12px">---</div>
+    <p class="info">Valor recibido: <b id="valor">---</b></p>
+    <button onclick="leer()">Leer ahora</button>
+    <button onclick="auto()" id="btnAuto">Iniciar lectura automática</button>
+    <p class="info" id="msgLeer"></p>
+  </div>
+
+  <div class="card">
+    <h2>Escribir en un actuador</h2>
+    <label>ID del dispositivo</label>
+    <input id="idEsc">
+    <label>Clave del dispositivo</label>
+    <input id="claveEsc" type="password">
+    <button onclick="escribir(1)">Enviar 1 (encender)</button>
+    <button onclick="escribir(0)">Enviar 0 (apagar)</button>
+    <p class="info" id="msgEsc"></p>
+  </div>
+
+<script>
+  const BASE = "https://cygnus.uniajc.edu.co/appis/";
+  let timer = null;
+
+  async function leer(){
+    const id = document.getElementById("idLeer").value.trim();
+    const c  = document.getElementById("claveLeer").value.trim();
+    const est = document.getElementById("estado");
+    const msg = document.getElementById("msgLeer");
+    if(!id || !c){ msg.textContent = "Escribe el ID y la clave."; return; }
+    try{
+      const r = await fetch(BASE + "ldispositivo.php?id=" + encodeURIComponent(id) + "&c=" + encodeURIComponent(c));
+      const t = (await r.text()).trim();
+      document.getElementById("valor").textContent = t;
+      if(t === "1"){ est.textContent = "Objeto detectado"; est.className = "ok"; }
+      else if(t === "0"){ est.textContent = "Libre"; est.className = "no"; }
+      else { est.textContent = t; est.className = ""; }
+      msg.textContent = "Última lectura: " + new Date().toLocaleTimeString();
+    }catch(e){
+      msg.textContent = "No se pudo leer: " + e;
+    }
+  }
+
+  function auto(){
+    const b = document.getElementById("btnAuto");
+    if(timer){ clearInterval(timer); timer = null; b.textContent = "Iniciar lectura automática"; }
+    else { leer(); timer = setInterval(leer, 2000); b.textContent = "Detener lectura automática"; }
+  }
+
+  async function escribir(v){
+    const id = document.getElementById("idEsc").value.trim();
+    const c  = document.getElementById("claveEsc").value.trim();
+    const msg = document.getElementById("msgEsc");
+    if(!id || !c){ msg.textContent = "Escribe el ID y la clave."; return; }
+    try{
+      await fetch(BASE + "edispositivo.php?id=" + encodeURIComponent(id) + "&c=" + encodeURIComponent(c) + "&v=" + v, {mode:"no-cors"});
+      msg.textContent = "Enviado v=" + v + " a las " + new Date().toLocaleTimeString();
+    }catch(e){
+      msg.textContent = "No se pudo enviar: " + e;
+    }
+  }
+</script>
+</body>
+</html>
