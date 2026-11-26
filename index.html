@@ -55,7 +55,7 @@
     const msg = document.getElementById("msgLeer");
     if(!id || !c){ msg.textContent = "Escribe el ID y la clave."; return; }
     try{
-      const r = await fetch(BASE + "ldispositivo.php?id=" + encodeURIComponent(id) + "&c=" + encodeURIComponent(c));
+      const r = await fetch(BASE + "ldispositivo.php?id=" + encodeURIComponent(id) + "&c=" + encodeURIComponent(c) + "&t=" + Date.now(), {cache: "no-store"});
       const t = (await r.text()).trim();
       document.getElementById("valor").textContent = t;
       if(t === "1"){ est.textContent = "Objeto detectado"; est.className = "ok"; }
